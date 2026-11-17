@@ -1,0 +1,377 @@
+<!doctype html>
+<html lang="th">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Interactive 3D Jumbo Bag Configurator (Baffle Bag)</title>
+
+    <!-- Tailwind CSS (CDN) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Three.js (CDN) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <!-- OrbitControls (CDN) -->
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+
+    <!-- FontAwesome Icons (CDN) -->
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+
+    <!-- Local Styles -->
+    <link rel="stylesheet" href="css/style.css" />
+  </head>
+  <body class="select-none">
+    <!-- 3D Canvas Container -->
+    <div id="canvas-container"></div>
+
+    <!-- UI Overlay -->
+    <div
+      class="ui-overlay inset-0 flex flex-col justify-between p-4 md:p-6 pointer-events-none"
+    >
+      <!-- Header -->
+      <div class="flex justify-between items-start">
+        <div
+          class="bg-slate-900/80 backdrop-blur-md p-4 rounded-xl border border-slate-700 shadow-xl max-w-sm pointer-events-auto"
+        >
+          <h1
+            class="text-xl font-bold text-emerald-400 flex items-center gap-2"
+          >
+            <i class="fa-solid font-bold fa-box-archive"></i> Baffle Jumbo Bag
+            3D
+          </h1>
+        </div>
+
+        <!-- Controls Top Right -->
+        <div class="flex gap-2">
+          <!-- Auto-rotate toggle -->
+          <button
+            id="btn-autorotate"
+            class="pointer-events-auto bg-slate-800/90 hover:bg-slate-700 text-emerald-400 p-3 rounded-xl border border-slate-700 shadow-lg transition flex items-center gap-2 text-sm"
+            title="หยุด/หมุนกล้องอัตโนมัติ"
+          >
+            <i id="autorotate-icon" class="fa-solid fa-pause"></i>
+            <span class="hidden sm:inline">หยุดหมุน</span>
+          </button>
+          <!-- Mobile Toggle Panel Button -->
+          <button
+            id="btn-mobile-toggle"
+            class="pointer-events-auto md:hidden bg-slate-900/90 hover:bg-slate-800 text-slate-400 p-3 rounded-xl border border-slate-700 shadow-lg transition flex items-center justify-center text-sm"
+            title="ซ่อน/แสดง เมนูตั้งค่า"
+          >
+            <i
+              id="mobile-toggle-icon"
+              class="fa-solid fa-sliders text-base"
+            ></i>
+          </button>
+          <button
+            id="btn-reset"
+            class="pointer-events-auto bg-slate-800/90 hover:bg-slate-700 text-slate-200 p-3 rounded-xl border border-slate-700 shadow-lg transition flex items-center gap-2 text-sm"
+          >
+            <i class="fa-solid fa-rotate-left"></i>
+            <span class="hidden sm:inline">Reset View</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Main Configurator Panel -->
+      <div class="flex justify-end">
+        <!-- เพิ่ม class hidden บนมือถือ (hidden md:block) เพื่อซ่อน panel เป็นค่าเริ่มต้น -->
+        <div
+          id="config-panel"
+          class="pointer-events-auto hidden md:block bg-slate-900/85 backdrop-blur-md p-5 rounded-2xl border border-slate-700 shadow-2xl w-full max-w-md max-h-[75vh] md:max-h-[80vh] overflow-y-auto transition-all duration-300"
+        >
+          <h2
+            class="text-base font-semibold text-white mb-4 border-b border-slate-700 pb-2 flex items-center justify-between"
+          >
+            <span
+              ><i class="fa-solid fa-sliders text-emerald-400 mr-2"></i>
+              พารามิเตอร์และพาเลทสี</span
+            >
+            <button
+              id="btn-toggle-panel"
+              class="text-slate-400 hover:text-white p-1 rounded-lg transition"
+              title="พับ/ขยาย เมนู"
+            >
+              <i id="toggle-icon" class="fa-solid fa-chevron-up"></i>
+            </button>
+          </h2>
+
+          <!-- Controls -->
+          <div
+            id="panel-content"
+            class="space-y-4 text-sm transition-all duration-300"
+          >
+            <!-- Bulge Effect -->
+            <div
+              class="bg-slate-800/60 p-3 rounded-xl border border-slate-700/60"
+            >
+              <div class="flex justify-between text-xs text-slate-300 mb-1">
+                <span class="font-semibold text-emerald-300"
+                  ><i class="fa-solid fa-circle-dot mr-1"></i> แรงดันเบ่งถุง
+                  (Bulge Pressure)</span
+                >
+                <span
+                  id="val-bulge"
+                  class="font-mono text-emerald-400 font-bold"
+                  >120%</span
+                >
+              </div>
+              <input
+                id="input-bulge"
+                type="range"
+                min="0"
+                max="120"
+                value="120"
+                class="w-full accent-emerald-500 cursor-pointer"
+              />
+            </div>
+
+            <!-- Bag Transparency -->
+            <div
+              class="bg-slate-800/60 p-3 rounded-xl border border-slate-700/60"
+            >
+              <div class="flex justify-between text-xs text-slate-300 mb-1">
+                <span class="font-semibold text-emerald-300"
+                  ><i class="fa-solid fa-eye mr-1"></i> ความโปร่งใสของผ้า
+                  (Opacity)</span
+                >
+                <span
+                  id="val-opacity"
+                  class="font-mono text-emerald-400 font-bold"
+                  >100%</span
+                >
+              </div>
+              <input
+                id="input-opacity"
+                type="range"
+                min="15"
+                max="100"
+                value="100"
+                class="w-full accent-emerald-500 cursor-pointer"
+              />
+            </div>
+
+            <!-- Baffle Thickness -->
+            <div
+              class="bg-slate-800/60 p-3 rounded-xl border border-slate-700/60"
+            >
+              <div class="flex justify-between text-xs text-slate-300 mb-1">
+                <span class="font-semibold text-emerald-300"
+                  ><i class="fa-solid fa-layer-group mr-1"></i> ความหนาแผ่นกั้น
+                  (Baffle Thickness)</span
+                >
+                <span
+                  id="val-baffle-thick"
+                  class="font-mono text-emerald-400 font-bold"
+                  >2 mm</span
+                >
+              </div>
+              <input
+                id="input-baffle-thick"
+                type="range"
+                min="1"
+                max="8"
+                step="0.5"
+                value="2"
+                class="w-full accent-emerald-500 cursor-pointer"
+              />
+            </div>
+
+            <!-- Pellet Count Slider -->
+            <div
+              class="bg-slate-800/60 p-3 rounded-xl border border-slate-700/60"
+            >
+              <div class="flex justify-between text-xs text-slate-300 mb-1">
+                <span class="font-semibold text-emerald-300"
+                  ><i class="fa-solid fa-braille mr-1"></i> จำนวนเม็ดพลาสติก
+                  (Pellet Count)</span
+                >
+                <span
+                  id="val-pellet-count"
+                  class="font-mono text-emerald-400 font-bold"
+                  >22,000</span
+                >
+              </div>
+              <input
+                id="input-pellet-count"
+                type="range"
+                min="5000"
+                max="150000"
+                step="1000"
+                value="22000"
+                class="w-full accent-emerald-500 cursor-pointer"
+              />
+            </div>
+
+            <!-- Pellet Color Selector -->
+            <div
+              class="bg-slate-800/40 p-3 rounded-xl border border-slate-700/40"
+            >
+              <label
+                class="block text-xs text-slate-300 mb-2 font-medium flex items-center gap-1"
+              >
+                <i class="fa-solid fa-circles-radial text-emerald-400"></i>
+                สีของเม็ดพลาสติกด้านใน (Pellet Color)
+              </label>
+              <div class="flex gap-3" id="pellet-color-selector">
+                <button
+                  data-color="0xf8fafc"
+                  title="สีขาวขุ่น (Standard Pure)"
+                  class="w-7 h-7 rounded-full bg-slate-100 ring-2 ring-emerald-400 ring-offset-2 ring-offset-slate-900 transition border border-slate-300 flex items-center justify-center text-slate-700 font-bold text-[10px]"
+                >
+                  W
+                </button>
+                <button
+                  data-color="0x111827"
+                  title="สีดำ (HDPE Recycle)"
+                  class="w-7 h-7 rounded-full bg-slate-900 transition hover:scale-110 border border-slate-700 flex items-center justify-center text-slate-400 font-bold text-[10px]"
+                >
+                  B
+                </button>
+              </div>
+            </div>
+
+            <!-- Bag Color Selector -->
+            <div>
+              <label
+                class="block text-xs text-slate-300 mb-2 font-medium flex items-center gap-1"
+              >
+                <i class="fa-solid fa-paint-roller text-emerald-400"></i>
+                สีของตัวถุงจัมโบ้ (Bag Color)
+              </label>
+              <div class="flex gap-3" id="bag-color-selector">
+                <button
+                  data-color="0xfafafa"
+                  title="สีขาวผ้าดิบ"
+                  class="w-7 h-7 rounded-full bg-slate-100 ring-2 ring-emerald-400 ring-offset-2 ring-offset-slate-900 transition border border-slate-300"
+                ></button>
+                <button
+                  data-color="0xe2e8f0"
+                  title="สีเทาอ่อน"
+                  class="w-7 h-7 rounded-full bg-slate-300 transition hover:scale-110"
+                ></button>
+                <button
+                  data-color="0x3b82f6"
+                  title="สีน้ำเงินรีไซเคิล"
+                  class="w-7 h-7 rounded-full bg-blue-500 transition hover:scale-110"
+                ></button>
+                <button
+                  data-color="0xf57c00"
+                  title="สีส้มสเปกพิเศษ"
+                  class="w-7 h-7 rounded-full bg-orange-600 transition hover:scale-110"
+                ></button>
+                <button
+                  data-color="0x388e3c"
+                  title="สีเขียวคลังสินค้า"
+                  class="w-7 h-7 rounded-full bg-green-600 transition hover:scale-110"
+                ></button>
+              </div>
+            </div>
+
+            <!-- Loop Color Selector -->
+            <div>
+              <label
+                class="block text-xs text-slate-300 mb-2 font-medium flex items-center gap-1"
+              >
+                <i class="fa-solid fa-grip-lines text-emerald-400"></i>
+                สีของหูหิ้ว (Loop Color)
+              </label>
+              <div class="flex gap-3" id="loop-color-selector">
+                <button
+                  data-color="0x388e3c"
+                  title="สีเขียวคลังสินค้า"
+                  class="w-7 h-7 rounded-full bg-green-600 ring-2 ring-emerald-400 ring-offset-2 ring-offset-slate-900 transition"
+                ></button>
+                <button
+                  data-color="0x1e88e5"
+                  title="สีน้ำเงินเข้ม"
+                  class="w-7 h-7 rounded-full bg-blue-600 transition hover:scale-110"
+                ></button>
+                <button
+                  data-color="0xf57c00"
+                  title="สีส้ม"
+                  class="w-7 h-7 rounded-full bg-orange-600 transition hover:scale-110"
+                ></button>
+                <button
+                  data-color="0xd32f2f"
+                  title="สีแดง"
+                  class="w-7 h-7 rounded-full bg-red-600 transition hover:scale-110"
+                ></button>
+                <button
+                  data-color="0xfafafa"
+                  title="สีขาว"
+                  class="w-7 h-7 rounded-full bg-slate-100 transition hover:scale-110 border border-slate-400"
+                ></button>
+              </div>
+            </div>
+
+            <!-- Top Spout Option -->
+            <div>
+              <label class="block text-xs text-slate-300 mb-2"
+                >ปากถุงด้านบน (Top Option)</label
+              >
+              <div class="grid grid-cols-2 gap-2">
+                <button
+                  data-type="open"
+                  class="top-btn border border-emerald-500 bg-emerald-500/20 text-emerald-300 py-2 px-3 rounded-lg text-xs font-medium transition"
+                >
+                  ปากเปิด (Open Top)
+                </button>
+                <button
+                  data-type="spout"
+                  class="top-btn border border-slate-700 bg-slate-800 text-slate-300 py-2 px-3 rounded-lg text-xs font-medium hover:border-slate-600 transition"
+                >
+                  ท่อเติมสินค้า (Filling Spout)
+                </button>
+              </div>
+            </div>
+
+            <!-- Inner Void Toggle -->
+            <div
+              class="bg-slate-800/60 p-3 rounded-xl border border-slate-700/60"
+            >
+              <label
+                class="flex items-center justify-between cursor-pointer text-xs text-slate-300"
+              >
+                <span class="font-semibold text-emerald-300">
+                  <i class="fa-solid fa-circle-half-stroke mr-1"></i>
+                  แผ่นสีดำด้านปากถุง (Inner Void)
+                </span>
+                <input
+                  id="input-inner-void"
+                  type="checkbox"
+                  checked
+                  class="w-4 h-4 accent-emerald-500 cursor-pointer"
+                />
+              </label>
+            </div>
+          </div>
+
+          <!-- Spec Summary -->
+          <div
+            class="mt-5 pt-3 border-t border-slate-700/80 text-xs text-slate-400 flex justify-between items-center"
+          >
+            <span>ขนาดถุงจำลองมาตรฐาน:</span>
+            <span class="text-white font-mono text-xs font-semibold"
+              >105 × 105 × 145 cm</span
+            >
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==========================================
+         Local Scripts — โหลดตามลำดับ dependency
+         (config → utils → JumboBag → SceneManager → main)
+         ใช้ defer เพื่อรันหลัง parse DOM เสร็จ และคงลำดับ
+         ========================================== -->
+    <script defer src="js/config.js"></script>
+    <script defer src="js/utils.js"></script>
+    <script defer src="js/Pallet.js"></script>
+    <script defer src="js/JumboBag.js"></script>
+    <script defer src="js/SceneManager.js"></script>
+    <script defer src="js/main.js"></script>
+  </body>
+</html>
